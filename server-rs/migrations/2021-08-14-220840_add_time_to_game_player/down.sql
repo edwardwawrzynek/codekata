@@ -1,0 +1,1 @@
+ALTER TABLE game_players DROP COLUMN time_ms

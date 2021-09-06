@@ -1,0 +1,1 @@
+ALTER TABLE game_players DROP COLUMN waiting_for_move

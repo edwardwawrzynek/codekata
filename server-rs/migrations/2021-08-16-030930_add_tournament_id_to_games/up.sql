@@ -1,0 +1,2 @@
+ALTER TABLE games
+    ADD COLUMN tournament_id INTEGER DEFAULT NULL
