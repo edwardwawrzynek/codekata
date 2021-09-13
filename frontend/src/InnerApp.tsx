@@ -15,6 +15,6 @@ export default function InnerApp(props: InnerAppProps) {
   }
 
   return (
-    <Game conn={props.conn} id={4} full={true} />
+    <Game conn={props.conn} id={10} full={true} />
   );
 }

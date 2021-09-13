@@ -1,10 +1,11 @@
 import React, { CSSProperties, useContext, useEffect, useRef, useState } from 'react';
 import { GameId, GamePlayerState, UserId } from './api';
 import { ServerConnection } from './App';
+import NineHoles from './NineHoles';
 
 // convert a time in ms to string
 function msToStr(ms: number): string {
-  return `${(ms / 1000).toFixed(2)} s`;
+  return `${(ms / 1000).toFixed(1)} s`;
 }
 
 // game state display component type
@@ -12,6 +13,7 @@ export interface GameComponentProps {
   full: boolean;
   type: string;
   state: string[];
+  gameCfg: GameType;
 }
 type GameComponentType = React.ComponentType<GameComponentProps>;
 
@@ -20,6 +22,7 @@ interface PlayerColors {
   fg: string;
   bg: string;
   border?: string;
+  active?: string;
 }
 
 // A game component for unknown game type
@@ -47,11 +50,16 @@ const gameTypeMap: {[game_type: string]: GameType} = {
     playerColors: [{fg: "#000", bg: "#fff", border: "#000"}, {fg: "#fff", bg: "#000"}],
     doScore: false,
     component: UnknownGameType,
+  },
+  "nine_holes": {
+    playerColors: [{fg: "#fff", bg: "#253e69", active: "white"}, {fg: "#fff", bg: "#851229", active: "white"}],
+    doScore: false,
+    component: NineHoles,
   }
 };
 
 const defaultGameType: GameType = {
-  playerColors: [{fg: "#000", bg: "#fff"}],
+  playerColors: [{fg: "#000", bg: "#fff", border: "#000"}],
   doScore: true,
   component: UnknownGameType
 };
@@ -67,6 +75,7 @@ function GamePlayer(props: GamePlayerState & {full: boolean, color: PlayerColors
     "--player-fg": props.color.fg, 
     "--player-bg": props.color.bg,
     "--player-border": props.color.border ?? props.color.bg,
+    "--player-active": props.color.active ?? "#ff0000",
   } as CSSProperties;
 
   const [totalTimeLeft, setTotalTimeLeft] = useState(props.time);
@@ -82,7 +91,7 @@ function GamePlayer(props: GamePlayerState & {full: boolean, color: PlayerColors
         const totalLost = Math.max(elapsed - props.timePerPlayer, 0);
         setTotalTimeLeft(Math.max(props.time - totalLost, 0.0));
       }
-    }, 200);
+    }, 100);
 
     return () => {
       if(callbackId.current !== null) {
@@ -92,7 +101,7 @@ function GamePlayer(props: GamePlayerState & {full: boolean, color: PlayerColors
   }, [props.isCurrent, props.currentMoveStart, setCurrentTimeLeft, setTotalTimeLeft, props.time, props.timePerPlayer]);
 
   return (
-    <div className="gamePlayer" style={styles}>
+    <div className={`gamePlayer ${props.isCurrent ? 'gamePlayerActive' : ''}`} style={styles}>
       <div className="playerName">
         {gamePlayerName(props)}
       </div>
@@ -163,17 +172,19 @@ export default function Game(props: GameProps) {
 
       <div className="gameStatus">
         {game.started ? (game.finished ? "" : "Game In Progress") : "Game Not Started"}
-        {game.finished && 
-          (
-            game.winner === null ? "No Result" : 
-            game.winner === "tie" ? "Tie" : 
-            `${gamePlayerName(game.players.filter(p => p.id === game?.winner)[0])} Wins`
-          )
+        {game.finished &&
+          <span className="gameResult">
+            {
+              game.winner === null ? "No Result" : 
+              game.winner === "tie" ? "Tie" : 
+              `${gamePlayerName(game.players.filter(p => p.id === game?.winner)[0])} Wins`
+            }
+          </span>
         }
       </div>
 
       {game.state !== null &&
-        <GameComponent state={game.state} type={game.type} full={props.full} />
+        <GameComponent state={game.state} type={game.type} full={props.full} gameCfg={gameType} />
       }
     </div>
   );

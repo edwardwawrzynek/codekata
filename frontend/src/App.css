@@ -10,7 +10,16 @@
 
 .game {
   padding: 0.1rem;
-  border: 1px solid var(--fg-color);
+}
+
+.gameStatus {
+  margin-top: 0.5rem;
+  font-size: 1.2rem;
+  text-align: center;
+}
+
+.gameResult {
+  font-weight: bold;
 }
 
 .gamePlayer {
@@ -23,17 +32,17 @@
   border: 1px solid var(--player-border);
 }
 
+.gamePlayerActive {
+  font-weight: 900;
+  border: 3px dashed var(--player-active);
+}
+
 .playerName {
   font-size: 1.2rem;
 }
 
 .playerScore, .playerTime {
   flex: 1 1 auto;
-}
-
-.gameStatus {
-  font-size: 1.2rem;
-  text-align: center;
 }
 
 @media screen and (max-width: 800px) {

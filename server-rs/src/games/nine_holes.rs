@@ -1,4 +1,4 @@
-use crate::games::{Fmt, GameInstance, GameScore, GameState, GameTurn, GameType};
+use crate::games::{GameInstance, GameScore, GameState, GameTurn, GameType};
 use crate::models::UserId;
 use std::fmt;
 
