@@ -66,11 +66,17 @@ export function parse_command(msg: string): Command[] {
 // Game + connection state
 // This is a copy of information we got from the server
 
-type GameId = number;
-type UserId = number;
+export type GameId = number;
+export type UserId = number;
 
 // An ongoing game
-interface GameState {
+export interface GamePlayerState {
+  id: UserId;
+  score: number;
+  time: number;
+}
+
+export interface GameState {
   id: GameId;
   type: string;
   owner: UserId;
@@ -79,12 +85,9 @@ interface GameState {
   winner: UserId | "tie" | null;
   dur_total_time: number;
   dur_per_move: number;
-  current_player_time: number;
-  players: {
-    id: UserId,
-    score: number,
-    time: number
-  }[],
+  current_move_start: Date;
+  current_player: UserId;
+  players: GamePlayerState[],
   state: string[] | null;
 }
 
@@ -105,13 +108,14 @@ function game_state_from_cmd(cmd: Command): GameState {
     winner: cmd[6] === "-" ? null : cmd[6] === "tie" ? "tie" : +cmd[6],
     dur_total_time: +cmd[7],
     dur_per_move: +cmd[8],
-    current_player_time: +cmd[9],
-    players: (cmd[10] as Command[]).map(p => ({
+    current_move_start: new Date(+cmd[9]),
+    current_player: +cmd[10],
+    players: (cmd[11] as Command[]).map(p => ({
       id: +p[0],
       score: +p[1],
       time: +p[2],
     })),
-    state: cmd[10] === "-" ? null : cmd.slice(10).map(s => s as string),
+    state: cmd[12] === "-" ? null : cmd.slice(12).map(s => s as string),
   };
 }
 
@@ -151,55 +155,11 @@ function system_state_run_cmd(state: SystemState, cmd: Command): SystemState {
 }
 
 // Apply commands to a SystemState, apply the proper updates, and return the resulting SystemState
-function system_state_run_cmds(state: SystemState, cmd_msg: string): SystemState {
+export function system_state_run_cmds(state: SystemState, cmd_msg: string): SystemState {
   let new_state = state;
   parse_command(cmd_msg).forEach((cmd) => {
     new_state = system_state_run_cmd(new_state, cmd);
   });
 
   return new_state;
-}
-
-// a component to provide system state to children + allow children to interact with server
-interface SystemStateProviderProps {
-  api_url: string;
-  children: React.ReactNode
-}
-
-interface SystemContextValue {
-  socket: WebSocket | null;
-  state: SystemState;
-}
-
-export const SystemContext = React.createContext<SystemContextValue>({ socket: null, state: empty_system_state });
-
-export default function SystemStateProvider(props: SystemStateProviderProps) {
-  // server connection
-  const [sysState, setSysState] = useState<SystemState>(empty_system_state);
-  const [socket, setSocket] = useState<WebSocket | null>(null);
-
-  // connect to server
-  useEffect(() => {
-    const newSocket = new WebSocket(props.api_url);
-
-    newSocket.addEventListener("open", e => {
-      newSocket.send("version 2");
-    });
-
-    newSocket.addEventListener("message", e => {
-      setSysState((sysState) => system_state_run_cmds(sysState, e.data));
-    });
-
-    newSocket.addEventListener("error", e => {
-      alert("WebSocket error: " + e);
-    })
-
-    setSocket(newSocket);
-  }, [props.api_url]);
-
-  return (
-    <SystemContext.Provider value={{socket, state: sysState}}>
-      {props.children}
-    </SystemContext.Provider>
-  );
 }

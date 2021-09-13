@@ -9,7 +9,7 @@ use futures_channel::mpsc;
 use futures_util::{future, pin_mut, stream::TryStreamExt, StreamExt};
 use std::future::Future;
 use std::sync::MutexGuard;
-use std::time::Duration;
+use std::time::{Duration, UNIX_EPOCH};
 use std::{
     collections::HashMap,
     collections::HashSet,
@@ -203,8 +203,8 @@ impl ClientMap {
 
 /// Convert a game and its players to a game command
 fn serialize_game_state(game: &Game, players: &[GamePlayer]) -> ServerCommand {
-    let (finished, winner, state) = match &game.instance {
-        &None => (false, GameState::InProgress, None),
+    let (finished, winner, state, current_player) = match &game.instance {
+        &None => (false, GameState::InProgress, None, None),
         Some(inst) => {
             let state = format!("{}", Fmt(|f| inst.serialize(f)));
             match inst.turn() {
@@ -212,20 +212,13 @@ fn serialize_game_state(game: &Game, players: &[GamePlayer]) -> ServerCommand {
                     true,
                     inst.end_state().unwrap_or(GameState::InProgress),
                     Some(state),
+                    None,
                 ),
-                _ => (false, GameState::InProgress, Some(state)),
+                GameTurn::Turn(uid) => (false, GameState::InProgress, Some(state), Some(uid)),
             }
         }
     };
-    // calculate time left in dur_per_move (ignoring sudden death time left)
-    let current_player_time_for_move = match game.current_move_start {
-        Some(_) => Some(
-            game.current_player_time(Duration::ZERO)
-                .per_move
-                .as_millis() as i64,
-        ),
-        None => None,
-    };
+
     ServerCommand::Game {
         id: game.id,
         game_type: game.game_type.clone(),
@@ -234,7 +227,8 @@ fn serialize_game_state(game: &Game, players: &[GamePlayer]) -> ServerCommand {
         finished,
         winner,
         time_dur: game.time.to_ms(),
-        current_player_time_for_move,
+        current_move_start: game.current_move_start.map(|f| f.duration_since(UNIX_EPOCH).unwrap_or(Duration::ZERO).as_millis() as i64),
+        current_player,
         players: players
             .iter()
             .map(|p| (p.user_id, p.score, p.time_ms))

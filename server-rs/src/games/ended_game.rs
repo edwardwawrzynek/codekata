@@ -10,10 +10,14 @@ impl GameType for EndedGame {
     fn deserialize(&self, data: &str, _: &[UserId]) -> Option<Box<dyn GameInstance>> {
         let mut components = data.split(',');
         components.next()?;
-        let winner = components.next()?;
-        let reason = components.next()?;
-        let game_type = components.next()?;
-        let prev_state = components.next()?;
+        let winner = components.next()?.trim();
+        let reason = components.next()?.trim();
+        let game_type = components.next()?.trim();
+        let mut prev_state = components.next()?.trim().to_string();
+        while let Some(arg) = components.next() {
+            prev_state += ",";
+            prev_state += arg.trim();
+        }
 
         let winner = match winner {
             "-" => None,
@@ -24,7 +28,7 @@ impl GameType for EndedGame {
             winner,
             reason: reason.to_string(),
             game_type: game_type.to_string(),
-            prev_state: prev_state.to_string(),
+            prev_state: prev_state,
         }))
     }
 

@@ -144,15 +144,12 @@ impl TournamentTypeInstance for RoundRobinInstance {
         players: &[TournamentPlayer],
         db: &DBWrapper,
     ) -> Result<(), Error> {
-        println!("DEBUG start advance");
         // if no players, do nothing (tournament ended)
         if players.len() == 0 {
             return Ok(());
         }
-        println!("DEBUG start load games");
         // otherwise, load existing games
         let games = db.find_tournament_games(id)?;
-        println!("DEBUG end load games");
         // if no games exist, tournament was just started, so make games
         if games.len() == 0 {
             // create games

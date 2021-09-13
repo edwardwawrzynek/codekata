@@ -64,7 +64,8 @@ pub enum ServerCommand {
         finished: bool,
         winner: GameState,
         time_dur: GameTimeMs,
-        current_player_time_for_move: Option<i64>,
+        current_move_start: Option<i64>,
+        current_player: Option<UserId>,
         players: Vec<(UserId, Option<f64>, i64)>,
         state: Option<String>,
     },
@@ -208,7 +209,8 @@ impl fmt::Display for ServerCommand {
                 owner,
                 ref state,
                 ref time_dur,
-                current_player_time_for_move,
+                current_player,
+                current_move_start,
             } => {
                 write!(
                     f,
@@ -221,10 +223,15 @@ impl fmt::Display for ServerCommand {
                     ", {}, {}, ",
                     time_dur.sudden_death_ms, time_dur.per_move_ms
                 )?;
-                match current_player_time_for_move {
+                match current_move_start {
                     Some(t) => write!(f, "{}", t)?,
                     None => write!(f, "-")?,
                 };
+                write!(f, ", ")?;
+                match current_player {
+                    Some(i) => write!(f, "{}", i)?,
+                    None => write!(f, "-")?,
+                }
                 write!(f, ", [")?;
                 for (i, player) in players.iter().enumerate() {
                     write!(
@@ -469,12 +476,13 @@ mod tests {
                 finished: true,
                 winner: GameState::Tie,
                 time_dur: GameTimeMs { sudden_death_ms: 200, per_move_ms: 100 },
-                current_player_time_for_move: Some(150),
+                current_move_start: Some(150),
+                current_player: Some(3),
                 players: vec![(3, Some(0.5), 1), (4, Some(4.5), 2), (5, None, 3)],
                 state: Some("STATE".to_string()),
             }
             .to_string(),
-            "game 1, some_game, 2, true, true, tie, 200, 100, 150, [[3, 0.5, 1], [4, 4.5, 2], [5, 0, 3]], STATE"
+            "game 1, some_game, 2, true, true, tie, 200, 100, 150, 3, [[3, 0.5, 1], [4, 4.5, 2], [5, 0, 3]], STATE"
         );
         assert_eq!(
             ServerCommand::Go {

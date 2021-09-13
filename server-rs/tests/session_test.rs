@@ -27,6 +27,40 @@ async fn test_version() {
     "#,
     )
     .await;
+    session_test(
+        r#"
+[C1] version 1
+    "#,
+    )
+    .await;
+    session_test(
+        r#"
+[C1] version 3
+[S1] error invalid protocol version
+    "#,
+    )
+    .await;
+}
+
+#[tokio::test(flavor = "multi_thread")]
+async fn test_multiple_observe() {
+    session_test(
+        r#"
+[C1] version 2
+[S1] okay
+[C1] new_tmp_user Test1
+[S1] okay
+[C1] new_game chess, 100000, 0
+[S1] new_game 1
+[C1] observe_game 1
+[S1] game 1, chess, 1, false, false, -, 100000, 0, -, -, [], -
+[C1] observe_game 1
+[S1] game 1, chess, 1, false, false, -, 100000, 0, -, -, [], -
+[C1] version 2
+[S1] okay
+    "#,
+    )
+    .await;
 }
 
 #[tokio::test(flavor = "multi_thread")]
@@ -147,13 +181,13 @@ async fn test_game_observe() {
 [C1] new_game chess, 100000, 0
 [S1] new_game 1
 [C2] observe_game 1
-[S2] game 1, chess, 1, false, false, -, 100000, 0, -, [], -
+[S2] game 1, chess, 1, false, false, -, 100000, 0, -, -, [], -
 [C1] join_game 1
 [S1] okay
-[S2] game 1, chess, 1, false, false, -, 100000, 0, -, [[1, 0, 100000]], -
+[S2] game 1, chess, 1, false, false, -, 100000, 0, -, -, [[1, 0, 100000]], -
 [C1] leave_game 1
 [S1] okay
-[S2] game 1, chess, 1, false, false, -, 100000, 0, -, [], -
+[S2] game 1, chess, 1, false, false, -, 100000, 0, -, -, [], -
 [C2] stop_observe_game 1
 [S2] okay
 [C1] join_game 1
@@ -206,9 +240,9 @@ async fn test_game_play() {
 [S2] okay
 [S1] go 1, chess, *, *, rnbqkbnr/ppppp2p/5p2/6p1/4P3/P7/1PPP1PPP/RNBQKBNR w KQkq g6 0 3
 [C1] observe_game 1
-[S1] game 1, chess, 4, true, false, -, 100000, 0, *, [[4, 0, *], [5, 0, *]], rnbqkbnr/ppppp2p/5p2/6p1/4P3/P7/1PPP1PPP/RNBQKBNR w KQkq g6 0 3,[e2e4,f7f6,a2a3,g7g5]
+[S1] game 1, chess, 4, true, false, -, 100000, 0, *, 4, [[4, 0, *], [5, 0, *]], rnbqkbnr/ppppp2p/5p2/6p1/4P3/P7/1PPP1PPP/RNBQKBNR w KQkq g6 0 3,[e2e4,f7f6,a2a3,g7g5]
 [C1] play 1, d1h5
-[S1] game 1, chess, 4, true, true, 4, 100000, 0, *, [[4, 1, *], [5, 0, *]], rnbqkbnr/ppppp2p/5p2/6pQ/4P3/P7/1PPP1PPP/RNB1KBNR b KQkq - 0 3,[e2e4,f7f6,a2a3,g7g5,d1h5]
+[S1] game 1, chess, 4, true, true, 4, 100000, 0, *, -, [[4, 1, *], [5, 0, *]], rnbqkbnr/ppppp2p/5p2/6pQ/4P3/P7/1PPP1PPP/RNB1KBNR b KQkq - 0 3,[e2e4,f7f6,a2a3,g7g5,d1h5]
 [S1] okay
 [C2] version 2
 [S2] okay
@@ -295,13 +329,13 @@ async fn test_game_expiry() {
 [C2] join_game 1
 [S2] okay
 [C1] observe_game 1
-[S1] game 1, chess, 1, false, false, -, 500, 200, -, [[1, 0, 500], [2, 0, 500]], -
+[S1] game 1, chess, 1, false, false, -, 500, 200, -, -, [[1, 0, 500], [2, 0, 500]], -
 [C1] start_game 1
-[S1] game 1, chess, 1, true, false, -, 500, 200, *, [[1, 0, 500], [2, 0, 500]], rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1,[]
+[S1] game 1, chess, 1, true, false, -, 500, 200, *, 1, [[1, 0, 500], [2, 0, 500]], rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1,[]
 [S1] go 1, chess, *, *, rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1
 [S1] okay
 // wait for game to time out
-[S1] game 1, chess, 1, true, true, 2, 500, 200, 0, [[1, 0, 0], [2, 0, 500]], __ENDED_GAME, 2, Time Expired, chess, rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1,[]
+[S1] game 1, chess, 1, true, true, 2, 500, 200, *, -, [[1, 0, 0], [2, 0, 500]], __ENDED_GAME, 2, Time Expired, chess, rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1,[]
     "#,
     ).await;
 }
@@ -351,14 +385,14 @@ async fn test_tournament_create() {
 // server gives c2 observation
 [S2] tournament 1, round_robin, 1, chess, true, false, -, [[1, 0, 0, 0], [2, 0, 0, 0], [3, 0, 0, 0]], []
 // games (3 pick 2):
-[S2] game 1, chess, 1, false, false, -, 100000, 0, -, [[1, 0, 100000], [2, 0, 100000]], -
-[S2] game 2, chess, 1, false, false, -, 100000, 0, -, [[1, 0, 100000], [3, 0, 100000]], -
-[S2] game 3, chess, 1, false, false, -, 100000, 0, -, [[2, 0, 100000], [1, 0, 100000]], -
-[S2] game 4, chess, 1, false, false, -, 100000, 0, -, [[2, 0, 100000], [3, 0, 100000]], -
-[S2] game 5, chess, 1, false, false, -, 100000, 0, -, [[3, 0, 100000], [1, 0, 100000]], -
-[S2] game 6, chess, 1, false, false, -, 100000, 0, -, [[3, 0, 100000], [2, 0, 100000]], -
+[S2] game 1, chess, 1, false, false, -, 100000, 0, -, -, [[1, 0, 100000], [2, 0, 100000]], -
+[S2] game 2, chess, 1, false, false, -, 100000, 0, -, -, [[1, 0, 100000], [3, 0, 100000]], -
+[S2] game 3, chess, 1, false, false, -, 100000, 0, -, -, [[2, 0, 100000], [1, 0, 100000]], -
+[S2] game 4, chess, 1, false, false, -, 100000, 0, -, -, [[2, 0, 100000], [3, 0, 100000]], -
+[S2] game 5, chess, 1, false, false, -, 100000, 0, -, -, [[3, 0, 100000], [1, 0, 100000]], -
+[S2] game 6, chess, 1, false, false, -, 100000, 0, -, -, [[3, 0, 100000], [2, 0, 100000]], -
 // game 1 starts:
-[S2] game 1, chess, 1, true, false, -, 100000, 0, 0, [[1, 0, 100000], [2, 0, 100000]], rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1,[]
+[S2] game 1, chess, 1, true, false, -, 100000, 0, *, 1, [[1, 0, 100000], [2, 0, 100000]], rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1,[]
 
 [C1] version 2
 [S1] okay

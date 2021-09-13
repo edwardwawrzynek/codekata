@@ -60,7 +60,7 @@ version 2
 |`new_game <id>`|Server|Return the new game's id.|
 |`observe_game <id>`|Client|Get the state of the game with the given id, and receive updates when that state changes (server responds with `game`).|
 |`stop_observe_game <id>`|Client|Stop receiving updates about the state of the game with the given id.|
-|`game <id>,<type>,<owning_user_id>,<started>,<finished>,<winner_id OR "tie">,<dur_total_time>,<dur_per_move>,<current_player_time_for_move>,[[<player0_id>,<player0_score>,<player0_time>],...],<game_state OR "-">`|Server|Send a game's state to the client.|
+|`game <id>,<type>,<owning_user_id>,<started>,<finished>,<winner_id OR "tie">,<dur_total_time>,<dur_per_move>,<current_move_start>,<current_player_id>,[[<player0_id>,<player0_score>,<player0_time>],...],<game_state OR "-">`|Server|Send a game's state to the client.|
 |`join_game <id>`|Client|Join the game with the given id. The game must not be started yet.|
 |`leave_game <id>`|Client|Leave the game with the given id. The game must not be started yet.|
 |`start_game <id>`|Client|Start the game with the given id. The logged in user must own the game.|

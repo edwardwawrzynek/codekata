@@ -1,8 +1,8 @@
 use crate::apikey::ApiKey;
 use crate::diesel::prelude::*;
 use crate::error::Error;
-use crate::games::ended_game::EndedGameInstance;
-use crate::games::{Fmt, GameInstance, GameState, GameTurn, GameTypeMap};
+use crate::games::ended_game::{EndedGame, EndedGameInstance};
+use crate::games::{Fmt, GameInstance, GameState, GameTurn, GameType, GameTypeMap};
 use crate::models::{
     DBGame, DBTournament, GameId, GamePlayer, GamePlayerId, NewDBGame, NewDBTournament,
     NewGamePlayer, NewTournamentPlayer, NewUser, TournamentId, TournamentPlayer, User, UserId,
@@ -79,7 +79,11 @@ pub type TournamentAndPlayers = (Tournament, Vec<TournamentPlayer>);
 impl Game {
     pub fn from_dbgame(game: DBGame, type_map: &GameTypeMap, players: &[GamePlayerId]) -> Game {
         let instance = if let Some(ref state) = game.state {
-            type_map[&*game.game_type].deserialize(state, players)
+            if state.starts_with("__ENDED_GAME") {
+                EndedGame().deserialize(state, players)
+            } else {
+                type_map[&*game.game_type].deserialize(state, players)
+            }
         } else {
             None
         };
@@ -955,7 +959,6 @@ impl DBWrapper<'_, '_, '_> {
 
     /// Start a tournament
     pub fn start_tournament(&self, id: TournamentId, user_id: UserId) -> Result<(), Error> {
-        println!("DEBUG start");
         let mut tourney = self.find_tournament(id)?;
         if tourney.owner_id != user_id {
             return Err(Error::DontOwnGame);
@@ -963,21 +966,15 @@ impl DBWrapper<'_, '_, '_> {
         if tourney.started {
             return Err(Error::GameAlreadyStarted);
         }
-        println!("DEBUG good to start");
         // mark started + save tournament
         tourney.started = true;
         let players = self.find_tournament_players(id)?;
-        println!("DEBUG start save");
         self.save_tournament(&tourney, &*players)?;
-        println!("DEBUG end save");
-        println!("DEBUG start callback");
         (self.tournament_update_callback)(&tourney, &*players, &self);
-        println!("DEBUG end callback");
         // trigger game creation + starting
         tourney
             .instance
             .advance(tourney.id, tourney.owner_id, &tourney.cfg, &*players, &self)?;
-        println!("DEBUG end");
         Ok(())
     }
 

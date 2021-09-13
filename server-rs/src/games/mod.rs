@@ -5,6 +5,7 @@ use std::fmt::Debug;
 
 pub mod chess_game;
 pub mod ended_game;
+pub mod nine_holes;
 
 /// A type of game that can be played by the server.
 /// `GameType` represents the type of game, not a specific instance of that game.

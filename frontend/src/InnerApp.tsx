@@ -1,16 +1,20 @@
 import React, { useContext } from 'react';
-import SystemStateProvider, { API_URL, SystemContext } from './api';
+import { ServerConnection } from './App';
+import Game from './Game';
 
-export default function InnerApp() {
-  let ctx = useContext(SystemContext);
+interface InnerAppProps {
+  conn: ServerConnection;
+}
+
+export default function InnerApp(props: InnerAppProps) {
   
-  if(ctx.socket === null) {
+  if(!props.conn.connected) {
     return (
       <div>Connecting to Server...</div>
     );
   }
 
   return (
-    <div>Hello</div>
+    <Game conn={props.conn} id={4} full={true} />
   );
 }
