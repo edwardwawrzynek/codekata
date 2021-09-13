@@ -63,10 +63,4 @@ table! {
     }
 }
 
-allow_tables_to_appear_in_same_query!(
-    game_players,
-    games,
-    tournament_players,
-    tournaments,
-    users,
-);
+allow_tables_to_appear_in_same_query!(game_players, games, tournament_players, tournaments, users,);

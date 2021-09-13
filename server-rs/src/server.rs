@@ -227,7 +227,11 @@ fn serialize_game_state(game: &Game, players: &[GamePlayer]) -> ServerCommand {
         finished,
         winner,
         time_dur: game.time.to_ms(),
-        current_move_start: game.current_move_start.map(|f| f.duration_since(UNIX_EPOCH).unwrap_or(Duration::ZERO).as_millis() as i64),
+        current_move_start: game.current_move_start.map(|f| {
+            f.duration_since(UNIX_EPOCH)
+                .unwrap_or(Duration::ZERO)
+                .as_millis() as i64
+        }),
         current_player,
         players: players
             .iter()

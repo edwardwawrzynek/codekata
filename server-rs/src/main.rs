@@ -16,6 +16,7 @@ async fn main() {
 
     let mut game_type_map: GameTypeMap = HashMap::new();
     game_type_map.insert("chess", Box::new(games::chess_game::ChessGame()));
+    game_type_map.insert("nine_holes", Box::new(games::nine_holes::NineHolesGame()));
 
     let mut tournament_type_map: TournamentTypeMap = HashMap::new();
     tournament_type_map.insert("round_robin", Box::new(tournament::RoundRobin()));
