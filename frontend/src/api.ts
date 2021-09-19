@@ -1,5 +1,3 @@
-import React, {Fragment, useEffect, useState} from "react";
-
 export const API_URL = process.env.NODE_ENV === 'development' ? 'ws://localhost:9000' : 'ws://codekata.wawrzynek.com';
 
 // Command parsing
@@ -89,6 +87,7 @@ export interface GameState {
   current_player: UserId;
   players: GamePlayerState[],
   state: string[] | null;
+  apikeys: string[] | null;
 }
 
 function parse_bool(val: string): boolean {
@@ -116,33 +115,77 @@ function game_state_from_cmd(cmd: Command): GameState {
       time: +p[2],
     })),
     state: cmd[12] === "-" ? null : cmd.slice(12).map(s => s as string),
+    apikeys: null,
+  };
+}
+
+// parse a new_game_tmp_users command
+function game_state_from_new_game_tmp_users(cmd: Command): GameState {
+  return {
+    id: +cmd[1],
+    type: "unkown",
+    owner: -1,
+    started: false,
+    finished: false,
+    winner: null,
+    dur_per_move: 0,
+    dur_total_time: 0,
+    current_move_start: new Date(),
+    current_player: -1,
+    players: [],
+    state: null,
+    apikeys: cmd.slice(2) as string[],
   };
 }
 
 // Collection of games, users, and tournaments that we are interested in
 export interface SystemState {
   games: Map<GameId, GameState>;
+  current_user: {id: UserId, name: string, email: string} | null;
 }
 
-export const empty_system_state: SystemState = { games: new Map() };
+export const empty_system_state: SystemState = { games: new Map(), current_user: null };
 
 // apply a Command to a SystemState, and return the new resulting SystemState
-function system_state_run_cmd(state: SystemState, cmd: Command): SystemState {
+function system_state_run_cmd(state: SystemState, cmd: Command, new_game_callback: (id: GameId) => void): SystemState {
   if(cmd.length === 0) {
     return state;
   }
 
   switch(cmd[0]) {
-    case 'game':
-      const game = game_state_from_cmd(cmd);
+    case 'game': {
+      let game = game_state_from_cmd(cmd);
+      const old_game = state.games.get(game.id);
+      // preserve saved apikeys
+      if(old_game !== undefined) {
+        game.apikeys = old_game.apikeys;
+      }
+      // add game to state
       const new_games = new Map(state.games);
       new_games.set(game.id, game);
       return {
         ...state,
         games: new_games
       };
+    }
+    case 'new_game_tmp_users': {
+      const game = game_state_from_new_game_tmp_users(cmd);
+      const new_games = new Map(state.games);
+      new_games.set(game.id, game);
+      new_game_callback(game.id);
+      return {
+        ...state,
+        games: new_games,
+      };
+    }
+    case 'go':
     case 'okay':
       break;
+    case 'self_user_info':
+      return {
+        ...state,
+        current_user: {id: +cmd[1], name: cmd[2] as string, email: cmd[3] as string}
+      };
     case 'error':
       alert(`server reports error: ${cmd[1]}`);
       break;
@@ -155,10 +198,10 @@ function system_state_run_cmd(state: SystemState, cmd: Command): SystemState {
 }
 
 // Apply commands to a SystemState, apply the proper updates, and return the resulting SystemState
-export function system_state_run_cmds(state: SystemState, cmd_msg: string): SystemState {
+export function system_state_run_cmds(state: SystemState, cmd_msg: string, new_game_callback: (id: GameId) => void): SystemState {
   let new_state = state;
   parse_command(cmd_msg).forEach((cmd) => {
-    new_state = system_state_run_cmd(new_state, cmd);
+    new_state = system_state_run_cmd(new_state, cmd, new_game_callback);
   });
 
   return new_state;

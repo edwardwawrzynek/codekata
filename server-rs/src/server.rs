@@ -648,6 +648,52 @@ fn handle_cmd(
             )?;
             Ok(Some(ServerCommand::NewGame(game.id)))
         }
+        NewGameTmpUsers {
+            game_type,
+            total_time,
+            time_per_move,
+            num_tmp_users,
+        } => {
+            if *num_tmp_users <= 0 {
+                return Err(Error::InvalidNumberOfPlayers);
+            }
+
+            let db = &db()?;
+            // create users
+            let mut keys = vec![];
+            let mut users = vec![];
+            for i in 0..(*num_tmp_users) {
+                // create user
+                let name = format!("Temporary User #{}", i);
+                let user = db.new_tmp_user(&*name)?;
+                // create + set apikey
+                let key = ApiKey::new();
+                db.save_user(&User {
+                    api_key_hash: key.hash().to_string(),
+                    ..user
+                })?;
+                keys.push(key);
+                users.push(user.id);
+            }
+            // create game
+            let game = db.new_game(
+                *game_type,
+                users[0],
+                GameTimeCfg::from_ms(*time_per_move, *total_time),
+                None,
+            )?;
+            // join game
+            for id in &users {
+                db.join_game(game.id, *id)?;
+            }
+            // start game
+            db.start_game(game.id, users[0])?;
+
+            Ok(Some(ServerCommand::NewGameTmpUsers {
+                id: game.id,
+                users: keys,
+            }))
+        }
         ObserveGame(game_id) => {
             let (game, players) = db()?.find_game(*game_id)?;
             clients().add_to_topic(Topic::Game(*game_id), *client_addr);

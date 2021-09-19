@@ -130,7 +130,8 @@ fn parse_session_test(test: &str) -> Result<(Vec<SessionTestLine>, usize), Strin
 /// Check if the contents of a server response match an expected format
 /// This is a literal comparison, except that the expected format can include a *, which matches against any non whitespace, non comma, non bracket literal
 fn response_matches_expected(response: &str, expect: &str) -> bool {
-    let globable = |c: char| !c.is_whitespace() && c != ',' && c != '[' && c != ']';
+    let globable =
+        |c: char| !c.is_whitespace() && c != ',' && c != '[' && c != ']' && c != '\n' && c != '\r';
 
     let mut resp_iter = response.chars();
     let mut next = resp_iter.next();

@@ -58,6 +58,8 @@ version 2
 -|-|-|-
 |`new_game <type>, <total_time>, <time_per_move>`|Client|Create a new game of the given type (server responds with `new_game`). `total_time` is the total time each player gets for the game (in ms), and `time_per_move` is additional time each player is given each move (in ms).|
 |`new_game <id>`|Server|Return the new game's id.|
+|`new_game_tmp_users <type>, <total_time>, <time_per_move>, <num_users>`|Client|Create a new game with the given number of temporary users, and start that game.|
+|`new_game_tmp_users <id>, <user_0_apikey>, <user_1_apikey>, ...`|Server|Return the new game's id and apikeys for each of its players.|
 |`observe_game <id>`|Client|Get the state of the game with the given id, and receive updates when that state changes (server responds with `game`).|
 |`stop_observe_game <id>`|Client|Stop receiving updates about the state of the game with the given id.|
 |`game <id>,<type>,<owning_user_id>,<started>,<finished>,<winner_id OR "tie">,<dur_total_time>,<dur_per_move>,<current_move_start>,<current_player_id>,[[<player0_id>,<player0_score>,<player0_time>],...],<game_state OR "-">`|Server|Send a game's state to the client.|

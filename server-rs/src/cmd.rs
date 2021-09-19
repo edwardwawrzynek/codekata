@@ -55,6 +55,8 @@ pub enum ServerCommand {
     },
     /// Return a new game's id
     NewGame(GameId),
+    /// Report a new game with temp user
+    NewGameTmpUsers { id: GameId, users: Vec<ApiKey> },
     /// Report a game's state to clients
     Game {
         id: GameId,
@@ -133,6 +135,13 @@ pub enum ClientCommand<'a> {
         total_time: i64,
         time_per_move: i64,
     },
+    /// Create a new game with temporary users
+    NewGameTmpUsers {
+        game_type: &'a str,
+        total_time: i64,
+        time_per_move: i64,
+        num_tmp_users: i32,
+    },
     /// Observe a game with the given id
     ObserveGame(GameId),
     /// End observation of a game with the given id
@@ -199,6 +208,13 @@ impl fmt::Display for ServerCommand {
                 write!(f, "self_user_info {}, {}, {}", id, *name, *email_str)
             }
             &NewGame(id) => write!(f, "new_game {}", id),
+            &NewGameTmpUsers { id, ref users } => {
+                write!(f, "new_game_tmp_users {}", id)?;
+                for user in users {
+                    write!(f, ", {}", *user)?;
+                }
+                Ok(())
+            }
             &Game {
                 id,
                 ref game_type,
@@ -337,6 +353,7 @@ lazy_static! {
         m.insert("self_user_info", 0);
         m.insert("logout", 0);
         m.insert("new_game", 3);
+        m.insert("new_game_tmp_users", 4);
         m.insert("observe_game", 1);
         m.insert("stop_observe_game", 1);
         m.insert("join_game", 1);
@@ -411,6 +428,12 @@ impl ClientCommand<'_> {
                 game_type: args[0],
                 total_time: parse_val(args[1])?,
                 time_per_move: parse_val(args[2])?,
+            }),
+            "new_game_tmp_users" => Ok(NewGameTmpUsers {
+                game_type: args[0],
+                total_time: parse_val(args[1])?,
+                time_per_move: parse_val(args[2])?,
+                num_tmp_users: parse_val(args[3])?,
             }),
             "observe_game" => Ok(ObserveGame(parse_val(args[0])?)),
             "stop_observe_game" => Ok(StopObserveGame(parse_val(args[0])?)),
@@ -620,6 +643,15 @@ mod tests {
                 game_type: "chess",
                 total_time: 1000,
                 time_per_move: 500
+            })
+        );
+        assert_eq!(
+            ClientCommand::deserialize("new_game_tmp_users chess, 1000, 500, 5"),
+            Ok(ClientCommand::NewGameTmpUsers {
+                game_type: "chess",
+                total_time: 1000,
+                time_per_move: 500,
+                num_tmp_users: 5
             })
         );
         assert_eq!(

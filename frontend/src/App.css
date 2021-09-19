@@ -33,8 +33,11 @@
 }
 
 .gamePlayerActive {
-  font-weight: 900;
   border: 3px dashed var(--player-active);
+}
+
+.gamePlayerActive .playerName {
+  font-weight: 900;
 }
 
 .playerName {
@@ -43,6 +46,10 @@
 
 .playerScore, .playerTime {
   flex: 1 1 auto;
+}
+
+.playerApikey a {
+  color: inherit;
 }
 
 @media screen and (max-width: 800px) {

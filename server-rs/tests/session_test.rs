@@ -169,6 +169,21 @@ async fn test_game_create() {
 }
 
 #[tokio::test(flavor = "multi_thread")]
+async fn test_game_tmp_users_create() {
+    session_test(
+        r#"
+[C1] version 2
+[S1] okay
+[C1] new_game_tmp_users chess, 100000, 0, 2
+[S1] new_game_tmp_users 1, *, *
+[C1] version 2
+[S1] okay
+    "#,
+    )
+    .await;
+}
+
+#[tokio::test(flavor = "multi_thread")]
 async fn test_game_observe() {
     session_test(
         r#"
