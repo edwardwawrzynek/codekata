@@ -1,7 +1,7 @@
-import codekata.nine_holes.Board
-import codekata.nine_holes.Move
-import codekata.nine_holes.NineHolesHandler
-import codekata.nine_holes.Player
+import codekata.three_mens_morris.Board
+import codekata.three_mens_morris.Move
+import codekata.three_mens_morris.ThreeMensMorrisHandler
+import codekata.three_mens_morris.Player
 import kotlin.system.exitProcess
 
 object Sample {
@@ -11,7 +11,6 @@ object Sample {
     fun pickMove(board: Board, total_time_ms: Long, time_per_move_ms: Long): Move {
         // get all legal moves
         val moves = board.legalMoves()
-        println(moves)
         // if any move lets us win, make that move
         for (move in moves) {
             // apply the move to the board (this returns a new board with the move made)
@@ -51,7 +50,7 @@ object Sample {
         }
 
         codekata.ApiClient(args[0], args[1], listOf(
-            NineHolesHandler { board, total_time, time_per_move -> pickMove(board, total_time, time_per_move) }
+            ThreeMensMorrisHandler { board, total_time, time_per_move -> pickMove(board, total_time, time_per_move) }
         ))
         while (true) {
             Thread.sleep(100000)

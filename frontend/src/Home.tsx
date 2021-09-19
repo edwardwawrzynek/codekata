@@ -7,7 +7,7 @@ export default function Home(props: {conn: ServerConnection}) {
   const newGame = useCallback(() => {
     if(!conn.connected) return;
 
-    conn.socket?.send(`new_game_tmp_users nine_holes, 100000000, 0, 2`);
+    conn.socket?.send(`new_game_tmp_users three_mens_morris, 100000000, 0, 2`);
   }, [conn]);
 
   return (

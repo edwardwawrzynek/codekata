@@ -2,7 +2,7 @@ import React, { CSSProperties, useCallback, useEffect, useRef, useState } from '
 import { Link } from 'react-router-dom';
 import { GameId, GamePlayerState, UserId } from './api';
 import { ServerConnection } from './App';
-import NineHoles from './NineHoles';
+import ThreeMensMorris from './ThreeMensMorris';
 
 // convert a time in ms to string
 function msToStr(ms: number): string {
@@ -60,10 +60,10 @@ const gameTypeMap: {[game_type: string]: GameType} = {
     doScore: false,
     component: UnknownGameType,
   },
-  "nine_holes": {
+  "three_mens_morris": {
     playerColors: [{fg: "#fff", bg: "#253e69", active: "white"}, {fg: "#fff", bg: "#851229", active: "white"}],
     doScore: false,
-    component: NineHoles,
+    component: ThreeMensMorris,
   }
 };
 

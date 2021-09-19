@@ -1,8 +1,8 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { GameComponentProps } from './Game';
-import './NineHoles.css';
+import './ThreeMensMorris.css';
 
-export default function NineHoles(props: GameComponentProps) {
+export default function ThreeMensMorris(props: GameComponentProps) {
   const canvas = useRef<HTMLCanvasElement | null>(null);
   const [ctx, setCtx] = useState<CanvasRenderingContext2D | null>(null);
   const [moveSrc, setMoveSrc] = useState<[number, number] | null>(null);
@@ -53,6 +53,40 @@ export default function NineHoles(props: GameComponentProps) {
         }
 
         ctx.strokeStyle = "black";
+
+        // draw horizontal lines
+        for(let y = 0; y < 3; y++) {
+          for(let i = 0; i < 2; i++) {
+            ctx.beginPath();
+            ctx.moveTo((i + 0.5) * cellSize + radius, (y + 0.5) * cellSize);
+            ctx.lineTo((i + 1.5) * cellSize - radius, (y + 0.5) * cellSize);
+            ctx.stroke();
+          }
+        }
+        // draw vertical lines
+        for(let x = 0; x < 3; x++) {
+          for(let i = 0; i < 2; i++) {
+            ctx.beginPath();
+            ctx.moveTo((x + 0.5) * cellSize, (i + 0.5) * cellSize + radius);
+            ctx.lineTo((x + 0.5) * cellSize, (i + 1.5) * cellSize - radius);
+            ctx.stroke();
+          }
+        }
+        // draw diagonal lines
+        const diagOff = radius * 0.5 * Math.sqrt(2);
+        for(let d = 0; d < 2; d++) {
+          for(let i = 0; i < 2; i++) {
+            const p0 = (0.5 + i) * cellSize + diagOff;
+            const p1 = (1.5 + i) * cellSize - diagOff;
+            const p2 = (2.5 - i) * cellSize - diagOff;
+            const p3 = (1.5 - i) * cellSize + diagOff;
+
+            ctx.beginPath();
+            ctx.moveTo(d === 0 ? p0 : p2, (0.5 + i) * cellSize + diagOff);
+            ctx.lineTo(d === 0 ? p1 : p3, (1.5 + i) * cellSize - diagOff);
+            ctx.stroke();
+          }
+        }
 
         // draw pieces
         if(cell === '0' || cell === '1') {
@@ -135,7 +169,7 @@ export default function NineHoles(props: GameComponentProps) {
   }, [canvas, size, moveSrc, onPlay, player, remaining, state]);
 
   return (
-    <div className="nineHoles">
+    <div className="ThreeMensMorris">
       <canvas ref={canvas} width={400} height={400} tabIndex={1} onClick={onClick}></canvas>
     </div>
   );

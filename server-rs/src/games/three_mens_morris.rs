@@ -3,7 +3,7 @@ use crate::models::UserId;
 use std::fmt;
 
 #[derive(Debug)]
-pub struct NineHolesGame();
+pub struct ThreeMensMorrisGame();
 
 #[derive(Eq, PartialEq, Copy, Clone, Debug)]
 enum Cell {
@@ -11,13 +11,13 @@ enum Cell {
     Empty,
 }
 
-pub struct NineHolesGameInstance {
+pub struct ThreeMensMorrisGameInstance {
     players: [UserId; 2],
     board: [[Cell; 3]; 3],
     turn: i8,
 }
 
-impl GameType for NineHolesGame {
+impl GameType for ThreeMensMorrisGame {
     fn deserialize(&self, data: &str, players: &[UserId]) -> Option<Box<dyn GameInstance>> {
         let mut components = data.split(',');
         let state = components.next()?;
@@ -50,7 +50,7 @@ impl GameType for NineHolesGame {
             }
         }
 
-        Some(Box::new(NineHolesGameInstance {
+        Some(Box::new(ThreeMensMorrisGameInstance {
             turn,
             players: [players[0], players[1]],
             board,
@@ -61,7 +61,7 @@ impl GameType for NineHolesGame {
         if players.len() != 2 {
             None
         } else {
-            Some(Box::new(NineHolesGameInstance {
+            Some(Box::new(ThreeMensMorrisGameInstance {
                 board: [[Cell::Empty; 3]; 3],
                 turn: 0,
                 players: [players[0], players[1]],
@@ -70,7 +70,7 @@ impl GameType for NineHolesGame {
     }
 }
 
-impl NineHolesGameInstance {
+impl ThreeMensMorrisGameInstance {
     fn check_win(&self, p: i8) -> bool {
         // vertical wins
         for x in 0..3 {
@@ -195,7 +195,7 @@ fn expect(str: Option<&str>) -> Result<&str, String> {
     }
 }
 
-impl GameInstance for NineHolesGameInstance {
+impl GameInstance for ThreeMensMorrisGameInstance {
     fn serialize(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         for row in &self.board {
             for cell in row {
@@ -285,8 +285,8 @@ impl GameInstance for NineHolesGameInstance {
 }
 
 #[test]
-fn nine_holes_test() {
-    let game = NineHolesGame();
+fn three_mens_morris_test() {
+    let game = ThreeMensMorrisGame();
     let instance = game.new(&vec![1, 2]);
     if let Some(mut inst) = instance {
         assert_eq!(inst.end_state(), Some(GameState::InProgress));

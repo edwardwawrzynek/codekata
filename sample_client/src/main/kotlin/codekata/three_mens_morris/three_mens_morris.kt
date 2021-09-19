@@ -1,15 +1,15 @@
-package codekata.nine_holes
+package codekata.three_mens_morris
 
 import codekata.GameHandler
 
-// A cell on a nine holes board.
+// A cell on a three men's morris board.
 enum class Cell {
     Empty,
     EnemyPiece,
     OurPiece
 }
 
-// A player in a nine holes game.
+// A player in a three men's morris game.
 enum class Player {
     Us {
         override fun toCell() = Cell.OurPiece
@@ -24,7 +24,7 @@ enum class Player {
     abstract fun other(): Player
 }
 
-// A move in a nine holes game
+// A move in a three men's morris game
 abstract class Move {
     abstract fun applyToBoard(board: Board): Board
 }
@@ -54,7 +54,7 @@ class MovePieceMove(val srcX: Int, val srcY: Int, val dstX: Int, val dstY: Int, 
     override fun toString() = "$srcX $srcY $dstX $dstY"
 }
 
-// A Nine Holes board. The board is a 3 x 3 matrix of cells.
+// A three men's morris board. The board is a 3 x 3 matrix of cells.
 // Each cell is either empty, contains an opponent piece, or contains one of our pieces.
 class Board(val cells: Array<Array<Cell>>, val currentPlayer: Player) {
     companion object {
@@ -191,17 +191,17 @@ class Board(val cells: Array<Array<Cell>>, val currentPlayer: Player) {
     }
 }
 
-// A handler for a Nine Holes game.
+// A handler for a three men's morris game.
 // onMove is called when a move is required.
-class NineHolesHandler(val onMove: (board: Board, total_time_ms: Long, time_per_move_ms: Long) -> Move) :
+class ThreeMensMorrisHandler(val onMove: (board: Board, total_time_ms: Long, time_per_move_ms: Long) -> Move) :
     GameHandler() {
-    override fun canHandleGame(type: String) = type == "nine_holes"
+    override fun canHandleGame(type: String) = type == "three_mens_morris"
 
     override fun getMove(type: String, state: List<String>, total_time_ms: Long, time_per_move_ms: Long): String {
-        println("nine_holes handler: time ${total_time_ms / 1000} s + ${time_per_move_ms / 1000} s, board:")
+        println("three_mens_morris handler: time ${total_time_ms / 1000} s + ${time_per_move_ms / 1000} s, board:")
         val board = Board.fromString(state)
         println(board)
-        println("nine_holes handler: invoking user logic to find best move: ...")
+        println("three_mens_morris handler: invoking user logic to find best move: ...")
         val move = onMove(board, total_time_ms, time_per_move_ms)
         return move.toString()
     }
