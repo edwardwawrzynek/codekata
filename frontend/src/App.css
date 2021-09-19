@@ -20,6 +20,11 @@
 
 .gameResult {
   font-weight: bold;
+  background-color: var(--fg-color);
+  color: var(--bg-color);
+  padding: 0.1rem;
+  display: inline-block;
+  width: calc(100% - 0.2rem);
 }
 
 .gamePlayer {
@@ -30,6 +35,7 @@
   color: var(--player-fg);
   background: var(--player-bg);
   border: 1px solid var(--player-border);
+  word-wrap: anywhere;
 }
 
 .gamePlayerActive {

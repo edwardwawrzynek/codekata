@@ -94,24 +94,45 @@ export default function NineHoles(props: GameComponentProps) {
     const [x, y] = [(e.clientX - canvasLoc.left) / size, (e.clientY - canvasLoc.top) / size];
     const [cellX, cellY] = [Math.floor(x * 3), Math.floor(y * 3)];
 
+    const cellPiece = state[0][cellX + cellY * 3];
+
     // check if placing a piece is expected
     if(remaining[player] > 0) {
       setMoveSrc(null);
-      onPlay(`${cellX} ${cellY}`);
+      if(cellPiece === '.') {
+        onPlay(`${cellX} ${cellY}`);
+      }
     } else {
       // moving a piece is expected
       if(moveSrc !== null) {
+        // if the already selected cell is clicked, deselect
         if(cellX === moveSrc[0] && cellY === moveSrc[1]) {
           setMoveSrc(null);
-        } else {
+        }
+        // if there is a piece at destination, select that instead
+        else if(cellPiece !== '.') {
+          if(cellPiece === player.toString()) {
+            setMoveSrc([cellX, cellY]);
+          } else {
+            setMoveSrc(null);
+          }
+        } 
+        // otherwise, this is a valid move
+        else {
           onPlay(`${moveSrc[0]} ${moveSrc[1]} ${cellX} ${cellY}`);
           setMoveSrc(null);
         }
-      } else {
-        setMoveSrc([cellX, cellY]);
+      } 
+      
+      else {
+        if(cellPiece === player.toString()) {
+          setMoveSrc([cellX, cellY]);
+        } else {
+          setMoveSrc(null);
+        }
       }
     }
-  }, [canvas, size, moveSrc, onPlay, player, remaining]);
+  }, [canvas, size, moveSrc, onPlay, player, remaining, state]);
 
   return (
     <div className="nineHoles">

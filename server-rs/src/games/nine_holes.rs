@@ -110,6 +110,39 @@ impl NineHolesGameInstance {
                 return true;
             }
         }
+        // diagonal wins
+        let mut not_win = false;
+        for i in 0..3 {
+            match self.board[i][i] {
+                Cell::Piece(c) if c != p => {
+                    not_win = true;
+                }
+                Cell::Empty => {
+                    not_win = true;
+                }
+                _ => {}
+            }
+        }
+        if !not_win {
+            return true;
+        }
+
+        not_win = false;
+        for i in 0..3 {
+            match self.board[i][2 - i] {
+                Cell::Piece(c) if c != p => {
+                    not_win = true;
+                }
+                Cell::Empty => {
+                    not_win = true;
+                }
+                _ => {}
+            }
+        }
+        if !not_win {
+            return true;
+        }
+
         false
     }
 
