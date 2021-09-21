@@ -21,23 +21,8 @@ object Sample {
                 return move
             }
         }
-        // no move lets us win, so filter out any that let the enemy win
-        val goodMoves = moves.filter { move ->
-            // check if enemy can win if we make this win
-            val newBoard = board.applyMove(move)
-            !newBoard.legalMoves().any { enemyMove ->
-                newBoard.applyMove(enemyMove).winner() == Player.Enemy
-            }
-        }
-
-        // if we have no good moves, then pick from all moves at random
-        if (goodMoves.isEmpty()) {
-            return moves[0]
-        }
-        // otherwise, pick at random from good moves
-        else {
-            return goodMoves.random()
-        }
+        // otherwise, pick randomly
+        return moves.random()
     }
 
     @JvmStatic
@@ -45,7 +30,7 @@ object Sample {
         if (args.size < 2) {
             println("ARGS: server_url apikey")
             println("Example (running through gradle):")
-            println("./gradlew run --args \"ws://codekata.wawrzynek.com API_KEY\"")
+            println("./gradlew run --args \"ws://35.193.245.143:9000 API_KEY\"")
             exitProcess(1)
         }
 
