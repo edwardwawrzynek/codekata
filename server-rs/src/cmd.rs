@@ -68,7 +68,7 @@ pub enum ServerCommand {
         time_dur: GameTimeMs,
         current_move_start: Option<i64>,
         current_player: Option<UserId>,
-        players: Vec<(UserId, Option<f64>, i64)>,
+        players: Vec<(UserId, String, Option<f64>, i64)>,
         state: Option<String>,
     },
     /// Report a new tournament's id
@@ -82,7 +82,7 @@ pub enum ServerCommand {
         started: bool,
         finished: bool,
         winner: GameState,
-        players: Vec<TournamentPlayer>,
+        players: Vec<(UserId, String, i32, i32, i32)>,
         games: String,
     },
     /// Send a game to the client to make a move on
@@ -252,10 +252,11 @@ impl fmt::Display for ServerCommand {
                 for (i, player) in players.iter().enumerate() {
                     write!(
                         f,
-                        "[{}, {}, {}]",
+                        "[{}, {}, {}, {}]",
                         (*player).0,
-                        (*player).1.unwrap_or(0.0),
-                        (*player).2
+                        (*player).1,
+                        (*player).2.unwrap_or(0.0),
+                        (*player).3
                     )?;
                     if i < players.len() - 1 {
                         write!(f, ", ")?;
@@ -285,8 +286,8 @@ impl fmt::Display for ServerCommand {
                 for (i, player) in players.iter().enumerate() {
                     write!(
                         f,
-                        "[{}, {}, {}, {}]",
-                        player.user_id, player.win, player.loss, player.tie
+                        "[{}, {}, {}, {}, {}]",
+                        player.0, player.1, player.2, player.3, player.4
                     )?;
                     if i < players.len() - 1 {
                         write!(f, ", ")?;
@@ -501,11 +502,11 @@ mod tests {
                 time_dur: GameTimeMs { sudden_death_ms: 200, per_move_ms: 100 },
                 current_move_start: Some(150),
                 current_player: Some(3),
-                players: vec![(3, Some(0.5), 1), (4, Some(4.5), 2), (5, None, 3)],
+                players: vec![(3, "Name1".to_string(), Some(0.5), 1), (4, "Name2".to_string(), Some(4.5), 2), (5, "Name3".to_string(), None, 3)],
                 state: Some("STATE".to_string()),
             }
             .to_string(),
-            "game 1, some_game, 2, true, true, tie, 200, 100, 150, 3, [[3, 0.5, 1], [4, 4.5, 2], [5, 0, 3]], STATE"
+            "game 1, some_game, 2, true, true, tie, 200, 100, 150, 3, [[3, Name1, 0.5, 1], [4, Name2, 4.5, 2], [5, Name3, 0, 3]], STATE"
         );
         assert_eq!(
             ServerCommand::Go {
@@ -539,27 +540,13 @@ mod tests {
                 finished: true,
                 winner: GameState::Tie,
                 players: vec![
-                    TournamentPlayer {
-                        user_id: 3,
-                        id: 0,
-                        tournament_id: 1,
-                        win: 4,
-                        loss: 5,
-                        tie: 6
-                    },
-                    TournamentPlayer {
-                        user_id: 7,
-                        id: 0,
-                        tournament_id: 1,
-                        win: 8,
-                        loss: 9,
-                        tie: 10
-                    }
+                    (3, "Name1".to_string(), 4, 5, 6),
+                    (7, "Name2".to_string(), 8, 9, 10)
                 ],
                 games: "GAMES".to_string()
             }
             .to_string(),
-            "tournament 1, type, 2, game, true, true, tie, [[3, 4, 5, 6], [7, 8, 9, 10]], GAMES"
+            "tournament 1, type, 2, game, true, true, tie, [[3, Name1, 4, 5, 6], [7, Name2, 8, 9, 10]], GAMES"
         );
     }
 

@@ -1,4 +1,4 @@
-import React, { CSSProperties, useCallback, useEffect, useRef, useState } from 'react';
+import React, { CSSProperties, ReactNode, useCallback, useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { GameId, GamePlayerState, UserId } from './api';
 import { ServerConnection } from './App';
@@ -76,7 +76,7 @@ const defaultGameType: GameType = {
 // display a game player's information
 
 function gamePlayerName(player: GamePlayerState) {
-  return `Player #${player.id}`;
+  return player.name;
 }
 
 function GamePlayer(props: GamePlayerState & {apikey: string | null, gameId: GameId, full: boolean, color: PlayerColors, doScore: boolean, isCurrent: boolean, currentMoveStart: Date, timePerPlayer: number}) {
@@ -154,6 +154,24 @@ interface GameProps {
   currentPlayer: UserId | null;
 }
 
+export function GameStatus(props: {name: string, started: boolean, finished: boolean, winner: number | "tie" | null, getWinnerName: (id: number) => string, children?: ReactNode}) {
+  return (
+    <div className="gameStatus">
+      {props.started ? (props.finished ? "" : `${props.name} In Progress`) : `${props.name} Not Started`}
+      {props.finished &&
+        <span className="gameResult">
+          {
+            props.winner === null ? "No Result" : 
+            props.winner === "tie" ? "Tie" : 
+            `${props.getWinnerName(props.winner!!)} Wins`
+          }
+        </span>
+      }
+      {props.children}
+    </div>
+  );
+}
+
 export default function Game(props: GameProps) {
   // observe this game
   useEffect(() => {
@@ -190,6 +208,7 @@ export default function Game(props: GameProps) {
 
   return (
     <div className="game">
+      <div className="gameId">Game #{game.id}</div>
       <div className="flex">
         {game.players.map((p, i) => 
           <GamePlayer
@@ -206,24 +225,20 @@ export default function Game(props: GameProps) {
           />  
         )}
       </div>
-
-      <div className="gameStatus">
-        {game.started ? (game.finished ? "" : "Game In Progress") : "Game Not Started"}
-        {game.finished &&
-          <span className="gameResult">
-            {
-              game.winner === null ? "No Result" : 
-              game.winner === "tie" ? "Tie" : 
-              `${gamePlayerName(game.players.filter(p => p.id === game?.winner)[0])} Wins`
-            }
-          </span>
-        }
+      
+      <GameStatus
+        getWinnerName={(winner) => gamePlayerName(game.players.filter(p => p.id === winner)[0])}
+        name="Game"
+        started={game.started}
+        finished={game.finished}
+        winner={game.winner}
+      >
         {playerIndex !== null &&
           <div>
             Playing as: {gamePlayerName(game.players[playerIndex])}
           </div>
         }
-      </div>
+      </GameStatus>
 
       {game.state !== null &&
         <GameComponent 

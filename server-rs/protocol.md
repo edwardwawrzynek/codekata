@@ -62,7 +62,7 @@ version 2
 |`new_game_tmp_users <id>, <user_0_apikey>, <user_1_apikey>, ...`|Server|Return the new game's id and apikeys for each of its players.|
 |`observe_game <id>`|Client|Get the state of the game with the given id, and receive updates when that state changes (server responds with `game`).|
 |`stop_observe_game <id>`|Client|Stop receiving updates about the state of the game with the given id.|
-|`game <id>,<type>,<owning_user_id>,<started>,<finished>,<winner_id OR "tie">,<dur_total_time>,<dur_per_move>,<current_move_start>,<current_player_id>,[[<player0_id>,<player0_score>,<player0_time>],...],<game_state OR "-">`|Server|Send a game's state to the client.|
+|`game <id>,<type>,<owning_user_id>,<started>,<finished>,<winner_id OR "tie">,<dur_total_time>,<dur_per_move>,<current_move_start>,<current_player_id>,[[<player0_id>,<player0_name>,<player0_score>,<player0_time>],...],<game_state OR "-">`|Server|Send a game's state to the client.|
 |`join_game <id>`|Client|Join the game with the given id. The game must not be started yet.|
 |`leave_game <id>`|Client|Leave the game with the given id. The game must not be started yet.|
 |`start_game <id>`|Client|Start the game with the given id. The logged in user must own the game.|
@@ -77,7 +77,7 @@ version 2
 |`start_tournament <id>`|Client|Start a tournament with the given id (you must be owner of the tournament).|
 |`observe_tournament <id>`|Client|Get the state of the tournament with the given id and its constituent games, and receive updates when the tournament or constituent games change.|
 |`stop_observe_tournament <id>`|Client|Stop getting updates about a tournament and its constituent games.|
-|`tournament <id>,<tournament_type>,<owning_user_id>,<game_type>,<started>,<finished>,<winner_id or "tie">,[[<player_0_id>,<wins>,<loses>,<ties>],[<player_1_id>,<wins>,<loses>,<ties>],...],<games...>`|Server|Send a tournament's state to a client. The format of `<games>` depends on tournament type.|
+|`tournament <id>,<tournament_type>,<owning_user_id>,<game_type>,<started>,<finished>,<winner_id or "tie">,[[<player_0_id>,<name>,<wins>,<loses>,<ties>],[<player_1_id>,<name>,<wins>,<loses>,<ties>],...],<games...>`|Server|Send a tournament's state to a client. The format of `<games>` depends on tournament type.|
 
 ### Gameplay Commands
 |Command|Sender|Description|Protocol Version|

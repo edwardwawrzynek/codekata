@@ -1,4 +1,4 @@
-export const API_URL = process.env.NODE_ENV === 'development' ? 'ws://localhost:9000' : 'ws://codekata.wawrzynek.com';
+export const API_URL = process.env.NODE_ENV === 'development' ? 'ws://localhost:9000' : 'ws://35.193.245.143:9000';
 
 // Command parsing
 type Command = (string | Command)[];
@@ -65,13 +65,23 @@ export function parse_command(msg: string): Command[] {
 // This is a copy of information we got from the server
 
 export type GameId = number;
+export type TournamentId = number;
 export type UserId = number;
 
 // An ongoing game
 export interface GamePlayerState {
   id: UserId;
+  name: string;
   score: number;
   time: number;
+}
+
+export interface TournamentPlayerState {
+  id: UserId;
+  name: string;
+  wins: number;
+  loses: number;
+  ties: number;
 }
 
 export interface GameState {
@@ -88,6 +98,18 @@ export interface GameState {
   players: GamePlayerState[],
   state: string[] | null;
   apikeys: string[] | null;
+}
+
+export interface TournamentState {
+  id: TournamentId;
+  type: string;
+  owner: UserId;
+  game_type: string;
+  started: boolean;
+  finished: boolean;
+  winner: UserId | "tie" | null;
+  players: TournamentPlayerState[];
+  games: GameId[];
 }
 
 function parse_bool(val: string): boolean {
@@ -111,8 +133,9 @@ function game_state_from_cmd(cmd: Command): GameState {
     current_player: +cmd[10],
     players: (cmd[11] as Command[]).map(p => ({
       id: +p[0],
-      score: +p[1],
-      time: +p[2],
+      name: p[1] as string,
+      score: +p[2],
+      time: +p[3],
     })),
     state: cmd[12] === "-" ? null : cmd.slice(12).map(s => s as string),
     apikeys: null,
@@ -138,13 +161,37 @@ function game_state_from_new_game_tmp_users(cmd: Command): GameState {
   };
 }
 
+// parse tournament command
+function tournament_state_from_cmd(cmd: Command): TournamentState {
+  console.assert(cmd[0] === "tournament");
+
+  return {
+    id: +cmd[1],
+    type: cmd[2] as string,
+    owner: +cmd[3],
+    game_type: cmd[4] as string,
+    started: parse_bool(cmd[5] as string),
+    finished: parse_bool(cmd[6] as string),
+    winner: cmd[7] === "-" ? null : cmd[7] === "tie" ? "tie" : +cmd[7],
+    players: (cmd[8] as Command[]).map(p => ({
+      id: +p[0],
+      name: p[1] as string,
+      wins: +p[2],
+      loses: +p[3],
+      ties: +p[4]
+    })),
+    games: (cmd[9] as Command[]).map(i => +i)
+  };
+}
+
 // Collection of games, users, and tournaments that we are interested in
 export interface SystemState {
   games: Map<GameId, GameState>;
+  tournaments: Map<TournamentId, TournamentState>;
   current_user: {id: UserId, name: string, email: string} | null;
 }
 
-export const empty_system_state: SystemState = { games: new Map(), current_user: null };
+export const empty_system_state: SystemState = { games: new Map(), tournaments: new Map(), current_user: null };
 
 // apply a Command to a SystemState, and return the new resulting SystemState
 function system_state_run_cmd(state: SystemState, cmd: Command, new_game_callback: (id: GameId) => void): SystemState {
@@ -166,6 +213,15 @@ function system_state_run_cmd(state: SystemState, cmd: Command, new_game_callbac
       return {
         ...state,
         games: new_games
+      };
+    }
+    case 'tournament': {
+      let tourney = tournament_state_from_cmd(cmd);
+      const new_tourneys = new Map(state.tournaments);
+      new_tourneys.set(tourney.id, tourney);
+      return {
+        ...state,
+        tournaments: new_tourneys
       };
     }
     case 'new_game_tmp_users': {

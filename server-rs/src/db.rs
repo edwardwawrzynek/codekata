@@ -682,7 +682,7 @@ impl DBWrapper<'_, '_, '_> {
             reason,
         )));
         self.save_game_and_players(&game, &mut *players)?;
-        self.handle_game_end(&game, &**game.instance.as_ref().unwrap())?;
+        self.handle_game_end(&game, &**game.instance.as_ref().unwrap(), &*players)?;
         Ok(())
     }
 
@@ -732,7 +732,7 @@ impl DBWrapper<'_, '_, '_> {
         }
     }
 
-    fn handle_game_end(&self, game: &Game, game_inst: &dyn GameInstance) -> Result<(), Error> {
+    fn handle_game_end(&self, game: &Game, game_inst: &dyn GameInstance, game_players: &[GamePlayer]) -> Result<(), Error> {
         if let Some(id) = game.tournament_id {
             let mut tournament = self.find_tournament(id)?;
             let mut players = self.find_tournament_players(id)?;
@@ -745,10 +745,12 @@ impl DBWrapper<'_, '_, '_> {
                 }
                 Some(GameState::Win(winner)) => {
                     for player in &mut players {
-                        if player.id == winner {
+                        if player.user_id == winner {
                             player.win += 1
                         } else {
-                            player.loss += 1
+                            if let Some(_) = game_players.iter().find(|p| p.user_id == player.user_id) {
+                                player.loss += 1
+                            }
                         }
                     }
                 }
@@ -762,6 +764,11 @@ impl DBWrapper<'_, '_, '_> {
                 &*players,
                 &self,
             )?;
+
+            // reload tournament + players, tournament update callback
+            tournament = self.find_tournament(id)?;
+            players = self.find_tournament_players(id)?;
+            (self.tournament_update_callback)(&tournament, &*players, &self);
         }
 
         Ok(())
@@ -791,7 +798,7 @@ impl DBWrapper<'_, '_, '_> {
         // if the game just ended and is in a tournament, adjust scores + advance tournament
         if let Some(ref inst) = game.instance {
             if let GameTurn::Finished = inst.turn() {
-                self.handle_game_end(&game, &**inst)?;
+                self.handle_game_end(&game, &**inst, &*players)?;
             }
         }
         move_res

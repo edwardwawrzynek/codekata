@@ -58,6 +58,23 @@
   color: inherit;
 }
 
+.tournamentGames {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.tournamentGames .game {
+  flex: 1 1 400px;
+  margin: 1rem;
+  padding: 0.2rem;
+  border-radius: 5px;
+  border: 1px solid #000;
+}
+
+.gameId {
+  text-align: right;
+}
+
 @media screen and (max-width: 800px) {
   .flex {
     flex-direction: column;

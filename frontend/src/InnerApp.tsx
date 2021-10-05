@@ -11,6 +11,7 @@ import { GameId } from './api';
 import { ServerConnection } from './App';
 import Game from './Game';
 import Home from './Home';
+import Tournament from './Tournament';
 
 interface InnerAppProps {
   conn: ServerConnection;
@@ -23,6 +24,19 @@ function UrlGame(props: InnerAppProps) {
     <Game 
       conn={props.conn} 
       id={+game_id} 
+      full={true}
+      currentPlayer={props.conn.state.current_user?.id ?? null}
+    />
+  );
+}
+
+function UrlTournament(props: InnerAppProps) {
+  const { tournament_id } = useParams<{tournament_id: string}>();
+
+  return (
+    <Tournament
+      conn={props.conn}
+      id={+tournament_id}
       full={true}
       currentPlayer={props.conn.state.current_user?.id ?? null}
     />
@@ -66,6 +80,9 @@ function InnerApp(props: InnerAppProps & {gameId: GameId | null, setGameId: (id:
     <Switch>
       <Route path="/game/:game_id">
         <UrlGame {...props} />
+      </Route>
+      <Route path="/tournament/:tournament_id">
+        <UrlTournament {...props} />
       </Route>
       <Route exact path="/">
         <Home {...props} />

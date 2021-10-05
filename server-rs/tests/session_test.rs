@@ -175,7 +175,8 @@ async fn test_game_tmp_users_create() {
 [C1] version 2
 [S1] okay
 [C1] new_game_tmp_users chess, 100000, 0, 2
-[S1] new_game_tmp_users 1, *, *
+[S1] new_game_tmp_users 1, *, *ls
+
 [C1] version 2
 [S1] okay
     "#,

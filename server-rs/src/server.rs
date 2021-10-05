@@ -202,7 +202,7 @@ impl ClientMap {
 }
 
 /// Convert a game and its players to a game command
-fn serialize_game_state(game: &Game, players: &[GamePlayer]) -> ServerCommand {
+fn serialize_game_state(game: &Game, players: &[GamePlayer], db: &DBWrapper) -> ServerCommand {
     let (finished, winner, state, current_player) = match &game.instance {
         &None => (false, GameState::InProgress, None, None),
         Some(inst) => {
@@ -219,6 +219,14 @@ fn serialize_game_state(game: &Game, players: &[GamePlayer]) -> ServerCommand {
         }
     };
 
+    let players = players.iter().map(|p| {
+        let user_name = match db.find_user(p.user_id) {
+            Ok(user) => user.name.clone(),
+            Err(_) => "Cannot load name".to_string()
+        };
+        (p.user_id, user_name, p.score, p.time_ms)
+    }).collect::<Vec<(UserId, String, Option<f64>, i64)>>();
+
     ServerCommand::Game {
         id: game.id,
         game_type: game.game_type.clone(),
@@ -233,10 +241,7 @@ fn serialize_game_state(game: &Game, players: &[GamePlayer]) -> ServerCommand {
                 .as_millis() as i64
         }),
         current_player,
-        players: players
-            .iter()
-            .map(|p| (p.user_id, p.score, p.time_ms))
-            .collect::<Vec<(UserId, Option<f64>, i64)>>(),
+        players,
         state,
     }
 }
@@ -257,6 +262,14 @@ fn serialize_tournament_state(
             .instance
             .serialize_games(tourney.id, &tourney.cfg, f, db))
     );
+
+    let players = players.iter().map(|p| {
+        let user_name = match db.find_user(p.user_id) {
+            Ok(user) => user.name.clone(),
+            Err(_) => "Cannot load name".to_string()
+        };
+        (p.user_id, user_name, p.win, p.loss, p.tie)
+    }).collect::<Vec<(UserId, String, i32, i32, i32)>>();
 
     Ok(ServerCommand::Tournament {
         id: tourney.id,
@@ -283,7 +296,7 @@ fn serialize_tournament_games(
     let games = db.find_tournament_games(id)?;
     for dbgame in games.into_iter() {
         let (game, players) = db.dbgame_to_game_and_players(dbgame)?;
-        res.push(serialize_game_state(&game, &*players));
+        res.push(serialize_game_state(&game, &*players, db));
     }
     Ok(res)
 }
@@ -383,7 +396,7 @@ fn handle_game_update(
     db: &DBWrapper,
     clients: &Mutex<ClientMap>,
 ) {
-    let state_cmd = serialize_game_state(game, players);
+    let state_cmd = serialize_game_state(game, players, db);
     let state_msg = Message::from(state_cmd.to_string());
     let clients = clients.lock().unwrap();
     // send game to all observers
@@ -695,9 +708,10 @@ fn handle_cmd(
             }))
         }
         ObserveGame(game_id) => {
-            let (game, players) = db()?.find_game(*game_id)?;
+            let db = &db()?;
+            let (game, players) = db.find_game(*game_id)?;
             clients().add_to_topic(Topic::Game(*game_id), *client_addr);
-            Ok(Some(serialize_game_state(&game, &players)))
+            Ok(Some(serialize_game_state(&game, &players, db)))
         }
         StopObserveGame(game_id) => {
             clients().remove_from_topic(Topic::Game(*game_id), client_addr);
